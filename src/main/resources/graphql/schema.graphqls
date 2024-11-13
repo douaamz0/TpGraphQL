@@ -1,0 +1,20 @@
+type Query{
+    listEtudiants : [Etudiant]
+    getEtudiantById(id:Float):Etudiant
+    centres:[Centre]
+    getCentreById(id:Float):Centre
+}
+type Etudiant{
+    id:Float
+    nom:String
+    prenom:String
+    genre:String
+    centre:Centre
+}
+
+type Centre{
+    id:Int
+    nom: String
+    adresse:String
+    listEtudiants:[Etudiant]
+}
