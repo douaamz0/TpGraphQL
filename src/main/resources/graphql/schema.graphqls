@@ -1,8 +1,25 @@
 type Query{
-    listEtudiants : [Etudiant]
-    getEtudiantById(id:Float):Etudiant
-    centres:[Centre]
-    getCentreById(id:Float):Centre
+    getAllCentres:[Centre]
+    getAllEtudiants:[Etudiant]
+    getCentre(id: Float):Centre
+    getEtudiant(id : Float):Etudiant
+
+
+}
+type Mutation{
+    addEtudiant(etudiant : EtudiantDTO):Etudiant
+    updateEtudiant(id:Float, etudiant : EtudiantDTO):Etudiant
+    deleteEtudiant(id:Float):String
+}
+type Subscription{
+    etudiantAdded:Etudiant
+}
+input EtudiantDTO{
+    nom:String
+    prenom:String
+    genre:String
+    centreId:Float
+
 }
 type Etudiant{
     id:Float

@@ -3,73 +3,55 @@ package org.example.tpgraphql.controllers;
 import org.example.tpgraphql.DTO.EtudiantDTO;
 import org.example.tpgraphql.entities.Centre;
 import org.example.tpgraphql.entities.Etudiant;
-import org.example.tpgraphql.repository.CentreRepository;
-import org.example.tpgraphql.repository.EtudiantRepository;
+import org.example.tpgraphql.service.CentreService;
+import org.example.tpgraphql.service.EtudiantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SubscriptionMapping;
 import org.springframework.stereotype.Controller;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
 @Controller
 public class EtudiantGraphQLController {
     @Autowired
-    private EtudiantRepository etudiantRepository;
+    EtudiantService etudiantService;
     @Autowired
-    private CentreRepository centreRepository;
+    CentreService centreService;
     @QueryMapping
-    public List<Etudiant> listEtudiants(){
-        return etudiantRepository.findAll();
+    public List<Centre> getAllCentres(){
+        return centreService.centres();
     }
     @QueryMapping
-    public Etudiant getEtudiantById(@Argument Long id){
-        return etudiantRepository.findById(id).orElseThrow(
-                ()->new RuntimeException(String.format("etudiant %d non trouvé ",id))
-        );
-    }@QueryMapping
-    public List<Centre> centres(){
-        return centreRepository.findAll();
+    public List<Etudiant>getAllEtudiants(){
+        return etudiantService.getStudents();
     }
     @QueryMapping
-    public Centre getCentreById(@Argument Long id){
-        return centreRepository.findById(id).orElseThrow(
-                ()->new RuntimeException(String.format("Centre %s non trouvé ",id))
-        );
+    public Centre getCentre(@Argument int id) {
+        return centreService.getCentre(id);
+    }
+    @QueryMapping
+    public Etudiant getEtudiant(@Argument Long id){
+        return etudiantService.getEtudiant(id);
     }
     @MutationMapping
-    public Etudiant addEtudiant(@Argument EtudiantDTO etudiant){
-        Centre centre=centreRepository.findById(etudiant.centreId()).orElse(null);
-        Etudiant et=new Etudiant();
-        et.setNom(etudiant.nom());
-        et.setPrenom(etudiant.prenom());
-        et.setGenre(etudiant.genre());
-        et.setCentre(centre);
-        return etudiantRepository.save(et);
-    }
-
-    @MutationMapping
-    public Etudiant updateEtudiant(@Argument Long id,@Argument EtudiantDTO etudiant){
-        Centre centre=centreRepository.findById(etudiant.centreId()).orElse(null);
-        Etudiant et=null;
-        if( etudiantRepository.findById(id).isPresent()) {
-            et = etudiantRepository.findById(id).get();
-            et.setNom(etudiant.nom());
-            et.setPrenom(etudiant.prenom());
-            et.setGenre(etudiant.genre());
-            et.setCentre(centre);
-            return etudiantRepository.save(et);
-        }
-        return et;
+    public Etudiant addEtudiant(@Argument EtudiantDTO etudiant) {
+        return etudiantService.addEtudiant(etudiant);
     }
     @MutationMapping
     public String deleteEtudiant(@Argument Long id){
-        Etudiant et;
-        if(etudiantRepository.findById(id).isPresent())
-        {
-            etudiantRepository.deleteById(id);
-            return String.format("L'étudiant %s bien supprimé ",id);}
-        else return String.format("L'étudiant %s n'exite pas ",id);
+        return etudiantService.deleteEtudiant(id);
     }
+    @MutationMapping
+    public Etudiant updateEtudiant(@Argument Long id,@Argument EtudiantDTO etudiant){
+        return etudiantService.updateEtudiant(id,etudiant);
+    }
+    @SubscriptionMapping
+    public Flux<Etudiant> etudiantAdded() {
+        return etudiantService.getEtudiantAddedPublisher();
+    }
+
 }
