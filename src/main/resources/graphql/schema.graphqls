@@ -13,6 +13,7 @@ type Mutation{
 }
 type Subscription{
     etudiantAdded:Etudiant
+    etudiantDeleted:String
 }
 input EtudiantDTO{
     nom:String

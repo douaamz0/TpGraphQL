@@ -3,6 +3,7 @@ package org.example.tpgraphql.service;
 import org.example.tpgraphql.DTO.EtudiantDTO;
 import org.example.tpgraphql.entities.Centre;
 import org.example.tpgraphql.entities.Etudiant;
+import org.example.tpgraphql.mappers.EtudiantMapper;
 import org.example.tpgraphql.repository.CentreRepository;
 import org.example.tpgraphql.repository.EtudiantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,11 @@ public class EtudiantService {
     EtudiantRepository etudiantRepository;
     @Autowired
     CentreRepository centreRepository;
+    @Autowired
+    EtudiantMapper etudiantMapper;
+
+    private final Sinks.Many<String> sinkDeleting=
+            Sinks.many().multicast().onBackpressureBuffer();
     //couler
     private final Sinks.Many<Etudiant> sink =
             Sinks.many().multicast().onBackpressureBuffer();
@@ -30,11 +36,7 @@ public class EtudiantService {
         Centre centre = centreRepository.findById(etudiant.centreId()).orElse(null);
         if (centre != null) {
             Etudiant et = new Etudiant();
-            et.setNom(etudiant.nom());
-            et.setPrenom(etudiant.prenom());
-            et.setGenre(etudiant.genre());
-            et.setCentre(centre);
-            sink.tryEmitNext(et);
+            etudiantMapper.toEtudiant(et,etudiant);
             etudiantRepository.save(et);
             sink.tryEmitNext(et);
             return et;
@@ -47,10 +49,7 @@ public class EtudiantService {
         if (centre != null)
             if (etudiantRepository.findById(id).isPresent()) {
                 Etudiant et = etudiantRepository.findById(id).get();
-                et.setNom(etudiant.nom());
-                et.setPrenom(etudiant.prenom());
-                et.setGenre(etudiant.genre());
-                et.setCentre(centre);
+                etudiantMapper.toEtudiant(et,etudiant);
                 return etudiantRepository.save(et);
             }
         return null;
@@ -62,10 +61,19 @@ public class EtudiantService {
 
     public String deleteEtudiant(Long id) {
         if (etudiantRepository.findById(id).isPresent()) {
+            Etudiant et=etudiantRepository.findById(id).get();
             etudiantRepository.deleteById(id);
+            String msg=String.format("l'etudiant %s %s inscrit dans le centre %s vient de quitter l'école !",
+                    et.getNom(),et.getPrenom(),et.getCentre().getNom());
+            sinkDeleting.tryEmitNext(msg);
             return String.format("l'étudiant %s est bien supprimé !", id);
         }
         return String.format("l'étudiant %s n'existe pas !", id);
+    }
+
+    public Flux<String> etudiantDeleted() {
+       return sinkDeleting.asFlux();
+
     }
 
     public Etudiant getEtudiant(Long id) {

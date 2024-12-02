@@ -54,4 +54,8 @@ public class EtudiantGraphQLController {
         return etudiantService.getEtudiantAddedPublisher();
     }
 
+    @SubscriptionMapping
+    public Flux<String> etudiantDeleted(){
+        return etudiantService.etudiantDeleted();
+    }
 }
